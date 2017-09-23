@@ -24,18 +24,40 @@ describe Obfuscator do
     it "should return an array of hashes containing characters and their counts in a given string" do
       expect(obfuscator.get_character_metrics("abaaacc")).to eq(
         [
-          { "a" => 1 },
-          { "b" => 1 },
-          { "a" => 3 },
-          { "c" => 2 }
+          { :char => "a", :count => 1 },
+          { :char => "b", :count => 1 },
+          { :char => "a", :count => 3 },
+          { :char => "c", :count => 2 }
         ]
       )
     end
   end
 
-  describe "get_character_set" do
+  describe "#get_character_set" do
     it "should return array of uniq characters in a string" do
       expect(obfuscator.get_character_set("abbccaaa")).to eq(["a", "b", "c"])
+    end
+  end
+
+  describe "#character_metrics_to_location_array" do
+    context "given an array of unique characters and a metrics set from #get_character_metrics" do
+      it "should return an array of hashes containing the index and count of each character" do
+        char_array = ["c", "a", "b"]
+        metrics_set = [
+          { :char => "a", :count => 1 },
+          { :char => "b", :count => 1 },
+          { :char => "a", :count => 3 },
+          { :char => "c", :count => 2 }
+        ]
+        expect(obfuscator.character_metrics_to_location_array(char_array, metrics_set)).to eq(
+          [
+            { :index => 1, :count => 1 },
+            { :index => 2, :count => 1 },
+            { :index => 1, :count => 3 },
+            { :index => 0, :count => 2 }
+          ]
+        )
+      end
     end
   end
 end
