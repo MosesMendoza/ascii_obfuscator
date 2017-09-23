@@ -61,6 +61,21 @@ describe Obfuscator do
     end
   end
 
+  describe "#divmods_for_all_locations" do
+    context "given an array of {:index => Integer, :count => Integer} hashes" do
+      it "calculates divmod solutions for all elements using #generate_set_of_divmods" do
+        location_array = [{ :index => 1, :count => 1 }, { :index => 2, :count => 1}]
+        results = obfuscator.divmods_for_all_locations(location_array)
+        first_location_results = results.first[:solutions]
+        second_location_results = results[1][:solutions]
+        expect(results.length).to eq(2)
+        expect(first_location_results.length).to eq(98)
+        expect(first_location_results).to include([29, 28], [46, 45])
+        expect(second_location_results.length).to eq(48)
+        expect(second_location_results).to include([93, 46], [27, 13])
+      end 
+    end
+  end
   describe "#generate_set_of_divmods" do
     context "given a ceiling and hash containing {:index => Integer, :count => Integer}" do
       it "returns an array of arrays representing Integer.divmod(Integer) pairs with solution :index, :count" do
