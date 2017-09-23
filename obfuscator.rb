@@ -10,6 +10,33 @@ class Obfuscator
     else
       raise "could not read file at path #{args[0]}"
     end
+    file_contents
   end
-  file_contents
+  # @param [String] file_contents the contents of the ascii art image to obfuscate
+  # @return [Array[Hash]] array of hashes containing {char => count of char}
+  def get_character_metrics(file_contents)
+    # first, generate an array of hashes representing an ordered list of
+    # characters with the associated number of consecutive times it appears in the
+    # text, before another character appears
+    characters_with_count = []
+    # split the file_contents into an array of characters
+    contents_list = file_contents.split('')
+    previous_char = contents_list[0]
+    previous_char_count = 0
+
+    contents_list.each_with_index do |char, index|
+      if char == previous_char
+        previous_char_count += 1
+      else
+        characters_with_count << { previous_char => previous_char_count }
+        previous_char = char
+        previous_char_count = 1
+      end
+      # Make sure we don't lose the last element
+      if index == contents_list.length - 1
+        characters_with_count << { previous_char => previous_char_count }
+      end
+    end
+    characters_with_count
+  end
 end
