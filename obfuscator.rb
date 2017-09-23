@@ -6,8 +6,9 @@ class Obfuscator
     contents = parse_args(args)
     character_set = get_character_set(contents)
     metrics = get_character_metrics(contents)
+    location_metrics = character_metrics_to_location_array(character_set, metrics)
     puts character_set.join.dump
-    puts metrics
+    puts location_metrics
   end
   # @param [Array] args the arguments to the script. must be one element,
   #   consisting of a string representing the path to a file on disk @return
