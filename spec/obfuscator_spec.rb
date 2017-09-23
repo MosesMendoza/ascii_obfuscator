@@ -32,4 +32,10 @@ describe Obfuscator do
       )
     end
   end
+
+  describe "get_character_set" do
+    it "should return array of uniq characters in a string" do
+      expect(obfuscator.get_character_set("abbccaaa")).to eq(["a", "b", "c"])
+    end
+  end
 end

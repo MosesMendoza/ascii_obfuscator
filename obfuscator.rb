@@ -1,6 +1,14 @@
 #! /usr/bin/ruby
 
 class Obfuscator
+  # Simple entry point - just delegate to other functionality
+  def obfuscate_file(args)
+    contents = parse_args(args)
+    character_set = get_character_set(contents)
+    metrics = get_character_metrics(contents)
+    puts character_set.join.dump
+    puts metrics
+  end
   # @param [Array] args the arguments to the script. must be one element,
   #   consisting of a string representing the path to a file on disk @return
   # @return [String] the contents of the given file path
@@ -12,6 +20,16 @@ class Obfuscator
     end
     file_contents
   end
+
+  # @param [String] file_contents the contents of the ascii art image to
+  #   obfuscate
+  # @return [Array] an Array containing a single instance of every character in
+  #   order of appearance in file_contents. We use Array rather than Set because
+  #   its more full-featured in ruby.
+  def get_character_set(file_contents)
+    file_contents.split('').uniq
+  end
+
   # @param [String] file_contents the contents of the ascii art image to obfuscate
   # @return [Array[Hash]] array of hashes containing {char => count of char}
   def get_character_metrics(file_contents)
