@@ -83,36 +83,65 @@ class Obfuscator
 
   # @param [Array[Hash]] location_array array of {:index => Integer, :count =>
   #   Integer} elements
-  # @return [Array[Hash]] an array of the same hashes, with an additional key,
-  #   value pair whose value is the set of solutions returned by
+  # @return [Array[Hash]] an array of the same hashes, with an additional {key =>
+  #   value} pair, :solutions, whose value is the set of solutions returned by
   #   generate_set_of_divmods
   def divmods_for_all_locations(location_array)
     results = []
     location_array.each do |location_and_count|
-      solutions = generate_set_of_divmods(100, location_and_count)
+      solutions = generate_set_of_divmods(location_and_count)
       results << location_and_count.merge(:solutions => solutions)
     end
     results
   end
 
-  # @param [Integer] max_divmod the ceiling divmod operand to search up to
   # @param [Hash] location_and_count {:index => Integer, :count => Integer}
   # @return [Array[Array]] Array of two element arrays representing all possible
-  #   divmod operands between 1 and 100 that together result in this :index,
+  #   divmod operands between 1 and some ceiling that together result in this :index,
   #   :count result. For example, given {:index => 1, :count => 17}, return an
   #   array containing such elements as [54, 37]
-  def generate_set_of_divmods(max_divmod, location_and_count)
+  #   If no results are found under ceiling 100, we do 10x the ceiling and try again.
+  #   Continue 10x'ing the ceiling up to four times before failing.
+  def generate_set_of_divmods(location_and_count)
     index = location_and_count[:index]
     count = location_and_count[:count]
     results = []
-    (0..max_divmod).each do |operand_x|
-      (1..max_divmod).each do |operand_y|
-        if operand_x.divmod(operand_y) == [index, count]
-          results << [operand_x, operand_y]
+    start_outer = 0
+    start_inner = 1 # refactor this terrible mess. We start with 1 because we can't divide by 0.
+    ceiling = 100
+    while results.empty? and ceiling <= 100 * 10**4
+      (start_outer..ceiling).each do |operand_x|
+        (start_inner..ceiling).each do |operand_y|
+          if operand_x.divmod(operand_y) == [index, count]
+            results << [operand_x, operand_y]
+          end
         end
+      end
+      if results.empty?
+        # it looks like we're inefficiently starting at 0 each time up to a new
+        # ceiling, but that's for a reason. The solution for x or y might be
+        # still be less than the value of ceiling.
+        ceiling *= 10
       end
     end
     results
   end
-end
 
+  # @todo Rename this method
+  # @param [Array[Hash]] locations_with_solutions the result of successfully
+  #   calculating #divmods_for_all_locations, ie an array of hashes, each
+  #   containing :index, :count, and :solutions keys
+  # @return [Array[Hash]] array
+  #   of hashes containing the same entries of locations_with_solutions, and an
+  #   additional key, :solution. This entry points to an array containing two
+  #   Integer elements. The second integer is common to all solution entries, and
+  #   is the shared operand to divmod such that
+  #   [index, count] == first_integer.divmod(second_integer).
+  def least_common_divmod_operand(locations_with_solutions)
+    # We're using a lot of resources here... Gradually build up the set
+    # intersection of the whole solution space The complicated part is, we're only
+    # looking for the common *second* integer in the two element array
+
+
+  end
+end

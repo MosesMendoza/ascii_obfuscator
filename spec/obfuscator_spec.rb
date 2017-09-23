@@ -77,12 +77,21 @@ describe Obfuscator do
     end
   end
   describe "#generate_set_of_divmods" do
-    context "given a ceiling and hash containing {:index => Integer, :count => Integer}" do
+    context "given a hash containing {:index => Integer, :count => Integer}" do
       it "returns an array of arrays representing Integer.divmod(Integer) pairs with solution :index, :count" do
-        results = obfuscator.generate_set_of_divmods(100, {:index => 1, :count => 17})
+        results = obfuscator.generate_set_of_divmods({:index => 1, :count => 17})
         # random selection of results
         expect(results).to include([42, 25], [77, 60], [94, 77])
         expect(results.length).to eq(66)
+      end
+
+      context "with no solutions under 100" do
+        it "will 10x the solution space" do
+          # 32, 4 has no solutions under 100, have to go to 1000
+          results = obfuscator.generate_set_of_divmods({:index => 32, :count => 4})
+          # random selection of results
+          expect(results).to include([740, 23], [932, 29], [996, 31])
+        end
       end
     end
   end
