@@ -124,7 +124,12 @@ class Obfuscator
         ceiling *= 10
       end
     end
-    results
+    # if results are still empty, fail.
+    if results.empty?
+      raise "Could not find a solution to #{location_and_Count}"
+    else
+      results
+    end
   end
 
   # @todo Rename this method
