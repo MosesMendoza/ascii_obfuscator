@@ -78,4 +78,25 @@ class Obfuscator
     end
     location_array  
   end
+
+  # @param [Hash] {:index => Integer, :count => Integer}
+  # @param [Integer] max_divmod the ceiling divmod operand to search up to
+  # @return [Array[Array]] Array of two element arrays representing all possible
+  #   divmod operands between 1 and 100 that together result in this :index,
+  #   :count result. For example, given {:index => 1, :count => 17}, return an
+  #   array containing such elements as [54, 37]
+  def generate_set_of_divmods(max_divmod, element_location)
+    index = element_location[:index]
+    count = element_location[:count]
+    results = []
+    (0..max_divmod).each do |operand_x|
+      (1..max_divmod).each do |operand_y|
+        if operand_x.divmod(operand_y) == [index, count]
+          results << [operand_x, operand_y]
+        end
+      end
+    end
+    results
+  end
 end
+

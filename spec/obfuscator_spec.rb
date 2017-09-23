@@ -60,4 +60,15 @@ describe Obfuscator do
       end
     end
   end
+
+  describe "#generate_set_of_divmods" do
+    context "given a ceiling and hash containing {:index => Integer, :count => Integer}" do
+      it "returns an array of arrays representing Integer.divmod(Integer) pairs with solution :index, :count" do
+        results = obfuscator.generate_set_of_divmods(100, {:index => 1, :count => 17})
+        # random selection of results
+        expect(results).to include([42, 25], [77, 60], [94, 77])
+        expect(results.length).to eq(66)
+      end
+    end
+  end
 end
