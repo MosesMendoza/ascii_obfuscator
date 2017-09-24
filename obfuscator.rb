@@ -31,6 +31,7 @@ class Obfuscator
     file_contents.split('').uniq
   end
 
+  # @todo refactor - this is too complicated
   # @param [String] file_contents the contents of the ascii art image to obfuscate
   # @return [Array[Hash]] array of hashes containing {:char => char, :count => count of char}
   def get_character_metrics(file_contents)
@@ -84,10 +85,10 @@ class Obfuscator
 
   # @param [Array[Hash]] location_array array of {:index => Integer, :count =>
   #   Integer} elements
-  # @return [Array[Hash]] an array of the same hashes, with an additional {key =>
+  # @return [Array[Hash]] an array of the same hashes, each with an additional {key =>
   #   value} pair, :solutions, whose value is the set of solutions returned by
   #   generate_set_of_divmods
-  def divmods_for_all_locations(location_array)
+  def add_divmods_to_all_locations(location_array)
     results = []
     location_array.each do |location_and_count|
       solutions = generate_set_of_divmods(location_and_count)
@@ -96,38 +97,34 @@ class Obfuscator
     results
   end
 
+  # @todo refactor - this is too complicated
+  # The business about the right ceiling to use is suboptimal. Tried starting
+  # small and increasing the ceiling given no results, but the problem is we
+  # need a solution that's common to all of the indexes, which for the higher
+  # numbers or more extravagant divmods means a very high operand.
   # @param [Hash] location_and_count {:index => Integer, :count => Integer}
   # @return [Array[Array]] Array of two element arrays representing all possible
   #   divmod operands between 1 and some ceiling that together result in this :index,
   #   :count result. For example, given {:index => 1, :count => 17}, return an
   #   array containing such elements as [54, 37]
-  #   If no results are found under ceiling 100, we do 10x the ceiling and try again.
-  #   Continue 10x'ing the ceiling up to four times before failing.
+  #   If no results are found under ceiling 1000, we fail
   def generate_set_of_divmods(location_and_count)
     index = location_and_count[:index]
     count = location_and_count[:count]
     results = []
     start_outer = 0
     start_inner = 1 # refactor this terrible mess. We start with 1 because we can't divide by 0.
-    ceiling = 100
-    while results.empty? and ceiling <= 100 * 10**4
-      (start_outer..ceiling).each do |operand_x|
-        (start_inner..ceiling).each do |operand_y|
-          if operand_x.divmod(operand_y) == [index, count]
-            results << [operand_x, operand_y]
-          end
+    ceiling = 1000
+    (start_outer..ceiling).each do |operand_x|
+      (start_inner..ceiling).each do |operand_y|
+        if operand_x.divmod(operand_y) == [index, count]
+          results << [operand_x, operand_y]
         end
-      end
-      if results.empty?
-        # it looks like we're inefficiently starting at 0 each time up to a new
-        # ceiling, but that's for a reason. The solution for x or y might be
-        # still be less than the value of ceiling.
-        ceiling *= 10
       end
     end
     # if results are still empty, fail.
     if results.empty?
-      raise "Could not find a solution to #{location_and_Count}"
+      raise "Could not find a solution to #{location_and_Count} given ceiling #{ceiling}"
     else
       results
     end
@@ -135,7 +132,7 @@ class Obfuscator
 
   # @todo Rename this method
   # @param [Array[Hash]] locations_with_solutions the result of successfully
-  #   calculating #divmods_for_all_locations, ie an array of hashes, each
+  #   calculating #add_divmods_to_all_locations, ie an array of hashes, each
   #   containing :index, :count, and :solutions keys
   # @return [Array[Hash]] array
   #   of hashes containing the same entries of locations_with_solutions, and an

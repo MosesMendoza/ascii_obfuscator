@@ -61,17 +61,17 @@ describe Obfuscator do
     end
   end
 
-  describe "#divmods_for_all_locations" do
+  describe "#add_divmods_to_all_locations" do
     context "given an array of {:index => Integer, :count => Integer} hashes" do
       it "calculates divmod solutions for all elements using #generate_set_of_divmods" do
         location_array = [{ :index => 1, :count => 1 }, { :index => 2, :count => 1}]
-        results = obfuscator.divmods_for_all_locations(location_array)
+        results = obfuscator.add_divmods_to_all_locations(location_array)
         first_location_results = results.first[:solutions]
         second_location_results = results[1][:solutions]
         expect(results.length).to eq(2)
-        expect(first_location_results.length).to eq(98)
+        expect(first_location_results.length).to eq(998)
         expect(first_location_results).to include([29, 28], [46, 45])
-        expect(second_location_results.length).to eq(48)
+        expect(second_location_results.length).to eq(498)
         expect(second_location_results).to include([93, 46], [27, 13])
       end 
     end
@@ -82,11 +82,10 @@ describe Obfuscator do
         results = obfuscator.generate_set_of_divmods({:index => 1, :count => 17})
         # random selection of results
         expect(results).to include([42, 25], [77, 60], [94, 77])
-        expect(results.length).to eq(66)
+        expect(results.length).to eq(966)
       end
 
-      context "with no solutions under 100" do
-        it "will 10x the solution space" do
+        it "returns solutions so even if none of the operands is under 100" do
           # 32, 4 has no solutions under 100, have to go to 1000
           results = obfuscator.generate_set_of_divmods({:index => 32, :count => 4})
           # random selection of results
