@@ -76,6 +76,7 @@ describe Obfuscator do
       end 
     end
   end
+
   describe "#generate_set_of_divmods" do
     context "given a hash containing {:index => Integer, :count => Integer}" do
       it "returns an array of arrays representing Integer.divmod(Integer) pairs with solution :index, :count" do
@@ -85,12 +86,32 @@ describe Obfuscator do
         expect(results.length).to eq(966)
       end
 
-        it "returns solutions so even if none of the operands is under 100" do
-          # 32, 4 has no solutions under 100, have to go to 1000
-          results = obfuscator.generate_set_of_divmods({:index => 32, :count => 4})
-          # random selection of results
-          expect(results).to include([740, 23], [932, 29], [996, 31])
-        end
+      it "returns solutions so even if none of the operands is under 100" do
+        # 32, 4 has no solutions under 100, have to go to 1000
+        results = obfuscator.generate_set_of_divmods({:index => 32, :count => 4})
+        # random selection of results
+        expect(results).to include([740, 23], [932, 29], [996, 31])
+      end
+
+      it "fails if no solutions are found" do
+        expect { obfuscator.generate_set_of_divmods({ :index => 10010, :count => 6 }) }.to raise_error(RuntimeError)
+      end
+    end
+  end
+
+  describe "#lowest_intersecting_solution" do
+    context "given a location set with solutions" do
+      it "should find the least common solution and populate the locations with it" do
+        location_array = [{ :index => 22, :count => 1 }, { :index => 1, :count => 4}]
+        locations_with_solutions = obfuscator.add_divmods_to_all_locations(location_array)
+        least_common_solution = obfuscator.lowest_intersecting_solution(locations_with_solutions)
+        expect(least_common_solution).to eq(5)
+      end
+
+      it "should fail if there is no intersecting solution" do
+        location_array = [{ :index => 22, :count => 34 }, { :index => 34, :count => 0}]
+        locations_with_solutions = obfuscator.add_divmods_to_all_locations(location_array)
+        expect { obfuscator.lowest_intersecting_solution(locations_with_solutions) }.to raise_error(RuntimeError)
       end
     end
   end

@@ -7,8 +7,9 @@ class Obfuscator
     character_set = get_character_set(contents)
     metrics = get_character_metrics(contents)
     location_metrics = character_metrics_to_location_array(character_set, metrics)
+    divmods = add_divmods_to_all_locations(location_metrics)
     puts character_set.join.dump
-    puts location_metrics
+    puts divmods
   end
   # @param [Array] args the arguments to the script. must be one element,
   #   consisting of a string representing the path to a file on disk @return
@@ -124,7 +125,7 @@ class Obfuscator
     end
     # if results are still empty, fail.
     if results.empty?
-      raise "Could not find a solution to #{location_and_Count} given ceiling #{ceiling}"
+      raise "Could not find a solution to #{location_and_count} given ceiling #{ceiling}"
     else
       results
     end
@@ -134,17 +135,41 @@ class Obfuscator
   # @param [Array[Hash]] locations_with_solutions the result of successfully
   #   calculating #add_divmods_to_all_locations, ie an array of hashes, each
   #   containing :index, :count, and :solutions keys
-  # @return [Array[Hash]] array
-  #   of hashes containing the same entries of locations_with_solutions, and an
-  #   additional key, :solution. This entry points to an array containing two
-  #   Integer elements. The second integer is common to all solution entries, and
-  #   is the shared operand to divmod such that
-  #   [index, count] == first_integer.divmod(second_integer).
-  def least_common_divmod_operand(locations_with_solutions)
+  # @return [Integer] The lowest integer common to the second element of all
+  #   solution arrays for all locations.
+  #   The second integer is common to all solution entries, and is the shared
+  #   operand to divmod such that:
+  #     [index, count] == first_integer.divmod(second_integer).
+  def lowest_intersecting_solution(locations_with_solutions)
     # We're using a lot of resources here... Gradually build up the set
-    # intersection of the whole solution space The complicated part is, we're only
-    # looking for the common *second* integer in the two element array
+    # intersection of the whole solution space The complicated part is, we're
+    # only looking for the common *second* integer in the two element array.
+    # That said, none of the solution sets for any location will contain a
+    # duplicate entry, so if we have the value we're looking for we can search
+    # the arrays for it deterministically.
+    # This is stuplidly expensive. there's a better way.
+    intersection = []
+    # The second element, count, is the one we need to find in common.
+    # First we need to prime the intersection with the first solution set
+    locations_with_solutions.first[:solutions].each { |pair| intersection << pair[1] }
 
+    # Now iterate and find the intersection solutions for all locations
+    locations_with_solutions.each do |location_with_solutions|
+      solutions = location_with_solutions[:solutions]
+      current_solution_set = []
 
+      solutions.each do |solution_pair|
+        current_solution_set << solution_pair[1]
+      end
+
+      # This isn't the bitwise and operator as you'd expect, it's ruby's
+      # intersection operator
+      intersection = intersection & current_solution_set
+      if intersection.empty?
+        raise "Could not find a common solution between current intersection set #{intersection} and #{location_with_solutions}. Possibly need to raise solution set ceiling."
+      end
+    end
+    # Now that we have the intersection, return the smallest one
+    intersection.min
   end
 end
