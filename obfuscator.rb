@@ -106,25 +106,23 @@ class Obfuscator
     fourth_results = []
 
     locations = [ 
-      {:set => first_set, :results => first_results},
-      {:set => second_set, :results => second_results},
-      {:set => third_set, :results => third_results},
-      {:set => fourth_set, :results => fourth_results}
+      {:id => 0, :set => first_set, :results => first_results},
+      {:id => 1, :set => second_set, :results => second_results},
+      {:id => 2, :set => third_set, :results => third_results},
+      {:id => 3, :set => fourth_set, :results => fourth_results}
     ]
     # This is about as naive, hardcoded, as it gets. but i'm tired of working on
     # this and just want to get something to work. Can clean it up later.
-    thread_counter = 0
     threads = locations.inject([]) do |acc, location|
       acc << Thread.new do
-        thread_counter += 1 # definitely not thread safe
         location[:set].each do |location_and_count|
           # first check if we've already done a calculation for this location,
           # count, and if so use that instead
           if existing_solution = location[:results].find { |elem| elem[:index] == location_and_count[:index] && elem[:count] == location_and_count[:count] }
-            puts "[Thread #{thread_counter}] reusing solution for #{location_and_count}"
+            puts "[Thread #{location[:id]}] reusing solution for #{location_and_count}"
             location[:results] << existing_solution
           else
-            puts "[Thread #{thread_counter}] generating set of divmods for #{location_and_count}"
+            puts "[Thread #{location[:id]}] generating set of divmods for #{location_and_count}"
             solutions = generate_set_of_divmods(location_and_count)
             location[:results] << location_and_count.merge(:solutions => solutions)
           end
