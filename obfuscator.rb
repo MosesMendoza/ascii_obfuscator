@@ -10,8 +10,10 @@ class Obfuscator
     divmods = add_divmods_to_all_locations(location_metrics)
     intersection = lowest_intersecting_solution(divmods)
     locations_with_solutions = add_solution_to_locations(intersection, divmods)
+    source_integers = get_source_integers(locations_with_solutions)
     puts character_set.join.dump
-    puts locations_with_solutions
+    puts source_integers
+    require 'pry';binding.pry
   end
   # @param [Array] args the arguments to the script. must be one element,
   #   consisting of a string representing the path to a file on disk @return
@@ -224,5 +226,17 @@ class Obfuscator
       location_with_solutions[:solution] = solution
     end
     locations
+  end
+
+  # @param [Array[Hash]] locations an array of hashes containing a :solution key
+  # pointing to a two-element array with second number in common such that
+  #   elem0.divmod(elem1) == [character_index, count_of_characters] in our image
+  # @return [Array[Integer]] An array of the first element of each :solution value
+  def get_source_integers(locations)
+    results = []
+    locations.each do |location|
+      results << location[:solution].first
+    end
+    results
   end
 end

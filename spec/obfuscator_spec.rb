@@ -128,4 +128,16 @@ describe Obfuscator do
       expect(results[1][:solution]).to eq([9, 5])
     end
   end
+
+  describe "#get_source_integers" do
+    context "given a hash containing :solution keys" do
+      it "should give back an array of the first element of each solution" do
+        location_array = [{ :index => 22, :count => 1 }, { :index => 1, :count => 4}]
+        locations_with_solutions = obfuscator.add_divmods_to_all_locations(location_array)
+        least_common_solution = obfuscator.lowest_intersecting_solution(locations_with_solutions)
+        results = obfuscator.add_solution_to_locations(least_common_solution, locations_with_solutions)
+        expect(obfuscator.get_source_integers(results)).to eq([111, 9])
+      end
+    end
+  end
 end
