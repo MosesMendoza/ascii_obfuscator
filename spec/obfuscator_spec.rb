@@ -69,9 +69,9 @@ describe Obfuscator do
         first_location_results = results.first[:solutions]
         second_location_results = results[1][:solutions]
         expect(results.length).to eq(2)
-        expect(first_location_results.length).to eq(998)
+        expect(first_location_results.length).to eq(4998)
         expect(first_location_results).to include([29, 28], [46, 45])
-        expect(second_location_results.length).to eq(498)
+        expect(second_location_results.length).to eq(2498)
         expect(second_location_results).to include([93, 46], [27, 13])
       end 
     end
@@ -83,7 +83,7 @@ describe Obfuscator do
         results = obfuscator.generate_set_of_divmods({:index => 1, :count => 17})
         # random selection of results
         expect(results).to include([42, 25], [77, 60], [94, 77])
-        expect(results.length).to eq(966)
+        expect(results.length).to eq(4966)
       end
 
       it "returns solutions so even if none of the operands is under 100" do
@@ -108,11 +108,24 @@ describe Obfuscator do
         expect(least_common_solution).to eq(5)
       end
 
-      it "should fail if there is no intersecting solution" do
+      # We don't actually have a known index/count couplet without a solution yet
+      pending("should fail if there is no intersecting solution") do
         location_array = [{ :index => 22, :count => 34 }, { :index => 34, :count => 0}]
         locations_with_solutions = obfuscator.add_divmods_to_all_locations(location_array)
         expect { obfuscator.lowest_intersecting_solution(locations_with_solutions) }.to raise_error(RuntimeError)
       end
+    end
+  end
+
+  describe "add_solution_to_locations" do
+    it "should find the solution pair and augment the locations hash with it" do
+      location_array = [{ :index => 22, :count => 1 }, { :index => 1, :count => 4}]
+      locations_with_solutions = obfuscator.add_divmods_to_all_locations(location_array)
+      least_common_solution = obfuscator.lowest_intersecting_solution(locations_with_solutions)
+      results = obfuscator.add_solution_to_locations(least_common_solution, locations_with_solutions)
+      expect(results.all? { |result| result.has_key?(:solution) })
+      expect(results.first[:solution]).to eq([111, 5])
+      expect(results[1][:solution]).to eq([9, 5])
     end
   end
 end

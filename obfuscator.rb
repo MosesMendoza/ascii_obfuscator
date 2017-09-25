@@ -8,8 +8,10 @@ class Obfuscator
     metrics = get_character_metrics(contents)
     location_metrics = character_metrics_to_location_array(character_set, metrics)
     divmods = add_divmods_to_all_locations(location_metrics)
+    intersection = lowest_intersecting_solution(divmods)
+    locations_with_solutions = add_solution_to_locations(intersection, divmods)
     puts character_set.join.dump
-    puts divmods
+    puts locations_with_solutions
   end
   # @param [Array] args the arguments to the script. must be one element,
   #   consisting of a string representing the path to a file on disk @return
@@ -91,14 +93,50 @@ class Obfuscator
   #   generate_set_of_divmods
   def add_divmods_to_all_locations(location_array)
     results = []
-    location_array.each do |location_and_count|
-      solutions = generate_set_of_divmods(location_and_count)
-      results << location_and_count.merge(:solutions => solutions)
+    # split in four to process in parallel
+
+    first_set = location_array.slice(0, location_array.size / 4)
+    second_set = location_array.slice(first_set.size, location_array.size / 4)
+    third_set = location_array.slice(first_set.size + second_set.size, location_array.size / 4)
+    fourth_set = location_array.slice(first_set.size + second_set.size + third_set.size, location_array.size)
+
+    first_results = []
+    second_results = []
+    third_results = []
+    fourth_results = []
+
+    locations = [ 
+      {:set => first_set, :results => first_results},
+      {:set => second_set, :results => second_results},
+      {:set => third_set, :results => third_results},
+      {:set => fourth_set, :results => fourth_results}
+    ]
+    # This is about as naive, hardcoded, as it gets. but i'm tired of working on
+    # this and just want to get something to work. Can clean it up later.
+    thread_counter = 0
+    threads = locations.inject([]) do |acc, location|
+      acc << Thread.new do
+        thread_counter += 1 # definitely not thread safe
+        location[:set].each do |location_and_count|
+          # first check if we've already done a calculation for this location,
+          # count, and if so use that instead
+          if existing_solution = location[:results].find { |elem| elem[:index] == location_and_count[:index] && elem[:count] == location_and_count[:count] }
+            puts "[Thread #{thread_counter}] reusing solution for #{location_and_count}"
+            location[:results] << existing_solution
+          else
+            puts "[Thread #{thread_counter}] generating set of divmods for #{location_and_count}"
+            solutions = generate_set_of_divmods(location_and_count)
+            location[:results] << location_and_count.merge(:solutions => solutions)
+          end
+        end
+      end
     end
+    threads.each { |th| th.join }
+    locations.each { |location| results = results + location[:results] }
     results
   end
 
-  # @todo refactor - this is too complicated
+  # @todo refactor - this is too complicated and too slow
   # The business about the right ceiling to use is suboptimal. Tried starting
   # small and increasing the ceiling given no results, but the problem is we
   # need a solution that's common to all of the indexes, which for the higher
@@ -115,7 +153,7 @@ class Obfuscator
     results = []
     start_outer = 0
     start_inner = 1 # refactor this terrible mess. We start with 1 because we can't divide by 0.
-    ceiling = 1000
+    ceiling = 5000
     (start_outer..ceiling).each do |operand_x|
       (start_inner..ceiling).each do |operand_y|
         if operand_x.divmod(operand_y) == [index, count]
@@ -164,12 +202,29 @@ class Obfuscator
 
       # This isn't the bitwise and operator as you'd expect, it's ruby's
       # intersection operator
-      intersection = intersection & current_solution_set
-      if intersection.empty?
+      new_intersection = intersection & current_solution_set
+      if new_intersection.empty?
         raise "Could not find a common solution between current intersection set #{intersection} and #{location_with_solutions}. Possibly need to raise solution set ceiling."
+      else
+        intersection = new_intersection
       end
     end
     # Now that we have the intersection, return the smallest one
+    puts "total intersection is: #{intersection}"
     intersection.min
+  end
+
+  # @param [Integer] intersecting_solution the lowest solution common to all second elements
+  # @param [Array[Hash]] locations a locations array containing hashes with
+  #   index, count, and solutions
+  # @return [Array[Hash]] the same locations hash with a new key, :solution,
+  #   with a value of the solution pair matching the intersecting solution
+  def add_solution_to_locations(intersecting_solution, locations)
+    locations.each do |location_with_solutions|
+      solutions = location_with_solutions[:solutions]
+      solution = solutions.find { |solution_pair| solution_pair[1] == intersecting_solution }
+      location_with_solutions[:solution] = solution
+    end
+    locations
   end
 end
